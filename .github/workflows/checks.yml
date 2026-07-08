@@ -1,0 +1,32 @@
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required files
+        run: test -f index.html && test -f .nojekyll
+
+      - name: Check inline JavaScript
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
+          if (!scripts.length) throw new Error('No inline JavaScript found');
+          for (const [, source] of scripts) new Function(source);
+          NODE
+
+      - name: Check whitespace
+        run: git diff --check HEAD^ HEAD
