@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IQ.wiki Web3 Wordle Widget</title>
+  <style>
+    :root {
+      --color-brand: #ff4fb8;
+      --color-brand-strong: #dc238f;
+      --color-brand-soft: #fff1f9;
+      --color-yellow: #f5c84c;
+      --color-yellow-soft: #fff7dc;
+      --color-ink: #101522;
+      --color-ink-soft: #2d3342;
+      --color-muted: #6d7280;
+      --color-faint: #9aa0ad;
+      --color-border: #e8eaf0;
+      --color-border-strong: #d7dae4;
+      --color-surface: #ffffff;
+      --color-surface-glass: rgba(255, 255, 255, 0.78);
+      --color-page: #f7f8fb;
+      --color-success: #16a36b;
+      --color-danger: #dc4141;
+      --radius-xs: 8px;
+      --radius-sm: 12px;
+      --radius-md: 18px;
+      --radius-lg: 24px;
+      --shadow-soft: 0 18px 44px rgba(17, 24, 39, 0.09);
+      --shadow-float: 0 28px 90px rgba(17, 24, 39, 0.18);
+      --shadow-brand: 0 14px 30px rgba(255, 79, 184, 0.24);
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+      --duration: 180ms;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--color-ink);
+      background:
+        linear-gradient(180deg, rgba(255, 79, 184, 0.06), rgba(255, 255, 255, 0) 44%),
+        radial-gradient(circle at 10% 8%, rgba(255, 79, 184, 0.16), transparent 28rem),
+        radial-gradient(circle at 86% 0%, rgba(245, 200, 76, 0.16), transparent 24rem),
+        var(--color-page);
+    }
+
+    .demo-shell {
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: clamp(18px, 4vw, 40px);
+    }
+
+    .demo-panel {
+      width: min(980px, 100%);
+      min-height: 560px;
+      padding: clamp(20px, 3vw, 34px);
+      background: var(--color-surface-glass);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(22px);
+    }
+
+    .demo-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 60px;
+      color: var(--color-ink-soft);
+      font-weight: 900;
+    }
+
+    .iq-mark {
+      width: 38px;
+      height: 38px;
+      flex: 0 0 auto;
+      color: var(--color-brand);
+    }
+
+    .demo-panel h1 {
+      max-width: 680px;
+      margin: 0;
+      font-size: clamp(2.2rem, 6vw, 5.2rem);
+      line-height: 0.92;
+      letter-spacing: 0;
+    }
+
+    .demo-copy {
+      max-width: 58ch;
+      margin: 18px 0 24px;
+      color: var(--color-muted);
+      font-size: 1.03rem;
+      line-height: 1.6;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 44px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: var(--radius-sm);
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform var(--duration) var(--ease), box-shadow var(--duration) var(--ease), background var(--duration) var(--ease), border-color var(--duration) var(--ease);
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+    }
+
+    .button:focus-visible,
+    .icon-button:focus-visible,
+    .guess-input:focus-visible,
+    .key:focus-visible,
+    .answer-link:focus-visible {
+      outline: 3px solid rgba(255, 79, 184, 0.28);
+      outline-offset: 2px;
+    }
+
+    .button-primary {
+      background: linear-gradient(135deg, var(--color-brand), var(--color-brand-strong));
+      color: white;
+      box-shadow: var(--shadow-brand);
+    }
+
+    .button-dark {
+      background: var(--color-ink);
+      color: white;
+      box-shadow: 0 10px 24px rgba(16, 21, 34, 0.14);
+    }
+
+    .button-ghost {
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--color-muted);
+      border: 1px solid var(--color-border);
+    }
+
+    .open-widget {
+      min-height: 48px;
+      padding: 0 20px;
+    }
+
+    .widget-root {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 20;
+    }
+
+    .widget-root.is-open {
+      display: block;
+    }
+
+    .widget-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(248, 249, 252, 0.72);
+      backdrop-filter: blur(16px);
+    }
+
+    .widget-card {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(500px, calc(100vw - 28px));
+      max-height: min(820px, calc(100vh - 28px));
+      transform: translate(-50%, -50%);
+      overflow: auto;
+      background:
+        linear-gradient(180deg, rgba(255, 241, 249, 0.72), rgba(255, 255, 255, 0.84) 28%),
+        var(--color-surface);
+      border: 1px solid rgba(255, 255, 255, 0.82);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-float);
+      animation: modal-in 260ms var(--ease);
+    }
+
+    @keyframes modal-in {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -48%) scale(0.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .widget-header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 20px 16px;
+      background: rgba(255, 255, 255, 0.72);
+      border-bottom: 1px solid rgba(232, 234, 240, 0.74);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-lockup .iq-mark {
+      width: 30px;
+      height: 30px;
+    }
+
+    .brand-title {
+      margin: 0;
+      color: var(--color-ink);
+      font-size: 1.05rem;
+      font-weight: 900;
+    }
+
+    .brand-subtitle {
+      margin: 1px 0 0;
+      color: var(--color-muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .icon-button {
+      display: inline-grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--color-ink);
+      cursor: pointer;
+      transition: transform var(--duration) var(--ease), border-color var(--duration) var(--ease), background var(--duration) var(--ease);
+    }
+
+    .icon-button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 79, 184, 0.38);
+      background: white;
+    }
+
+    .icon-button svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .widget-body {
+      padding: 18px 20px 20px;
+    }
+
+    .daily-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: var(--space-4);
+      color: var(--color-muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid rgba(255, 79, 184, 0.32);
+      border-radius: var(--radius-xs);
+      color: var(--color-brand-strong);
+      background: rgba(255, 79, 184, 0.09);
+      font-size: 0.75rem;
+      font-weight: 900;
+      text-transform: none;
+      white-space: nowrap;
+    }
+
+    .board {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0 18px;
+      padding: 14px;
+      border: 1px solid rgba(232, 234, 240, 0.84);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.58);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .guess-row {
+      display: grid;
+      grid-template-columns: repeat(var(--letters), minmax(0, 1fr));
+      gap: 6px;
+      min-height: 36px;
+    }
+
+    .brain-cell {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      aspect-ratio: 424 / 360;
+      border-radius: var(--radius-xs);
+      transition: color var(--duration) var(--ease), transform var(--duration) var(--ease);
+    }
+
+    .brain-cell.space {
+      opacity: 0;
+    }
+
+    .brain-cell.correct {
+      transform: translateY(-1px);
+    }
+
+    .brain-cell.absent {
+      opacity: 0.55;
+    }
+
+    .brain-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      color: var(--color-brand);
+      filter: grayscale(1) saturate(0.2) brightness(1.45) drop-shadow(0 2px 0 rgba(0, 0, 0, 0.05));
+      transition: filter var(--duration) var(--ease), opacity var(--duration) var(--ease), transform var(--duration) var(--ease);
+    }
+
+    .brain-cell.correct .brain-image {
+      filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.05));
+    }
+
+    .brain-cell.present .brain-image {
+      filter: sepia(1) saturate(2.2) hue-rotate(350deg) brightness(1.08) drop-shadow(0 2px 0 rgba(0, 0, 0, 0.05));
+    }
+
+    .brain-cell.absent .brain-image {
+      filter: grayscale(1) saturate(0.15) brightness(1.35) drop-shadow(0 2px 0 rgba(0, 0, 0, 0.04));
+    }
+
+    .brain-letter {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-size: clamp(0.54rem, 2.2vw, 0.78rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      pointer-events: none;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.32);
+    }
+
+    .space .brain-letter {
+      color: var(--color-muted);
+      text-shadow: none;
+    }
+
+    .guess-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .guess-input {
+      min-width: 0;
+      height: 48px;
+      padding: 0 14px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      color: var(--color-ink);
+      background: rgba(255, 255, 255, 0.84);
+      font: inherit;
+      font-weight: 800;
+      outline: none;
+      transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease), background var(--duration) var(--ease);
+    }
+
+    .guess-input:focus {
+      border-color: var(--color-brand);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(255, 79, 184, 0.14);
+    }
+
+    .submit-button,
+    .share-button,
+    .read-button,
+    .reset-button {
+      min-height: 44px;
+      border: 0;
+      border-radius: var(--radius-sm);
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .submit-button {
+      padding: 0 17px;
+    }
+
+    .message {
+      min-height: 26px;
+      margin: 9px 0 0;
+      color: var(--color-muted);
+      font-size: 0.9rem;
+      font-weight: 750;
+      line-height: 1.45;
+    }
+
+    .message.win {
+      color: var(--color-success);
+    }
+
+    .message.loss {
+      color: var(--color-danger);
+    }
+
+    .result-panel {
+      display: none;
+      margin-top: 16px;
+      padding: 14px;
+      border: 1px solid rgba(232, 234, 240, 0.88);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .result-panel.is-visible {
+      display: block;
+      animation: rise-in 220ms var(--ease);
+    }
+
+    @keyframes rise-in {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .answer-link {
+      display: inline;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--color-brand-strong);
+      font: inherit;
+      font-weight: 950;
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .stat {
+      padding: 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: white;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.35rem;
+      line-height: 1;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 5px;
+      color: var(--color-muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .share-button {
+    }
+
+    .read-button {
+      display: grid;
+      place-items: center;
+      text-decoration: none;
+    }
+
+    .reset-button {
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .share-preview {
+      margin: 12px 0 0;
+      padding: 12px;
+      white-space: pre-line;
+      color: var(--color-ink);
+      background: white;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .keyboard {
+      display: grid;
+      gap: 6px;
+      margin-top: 16px;
+    }
+
+    .key-row {
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .key {
+      min-width: 0;
+      width: 8.3%;
+      height: 34px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xs);
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--color-ink);
+      font-size: 0.72rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform var(--duration) var(--ease), border-color var(--duration) var(--ease), background var(--duration) var(--ease);
+    }
+
+    .key:hover {
+      transform: translateY(-1px);
+      border-color: var(--color-border-strong);
+      background: white;
+    }
+
+    .key.wide {
+      width: 14%;
+      font-size: 0.68rem;
+    }
+
+    .key.correct {
+      background: var(--color-brand);
+      color: white;
+      border-color: var(--color-brand);
+    }
+
+    .key.present {
+      background: var(--color-yellow);
+      border-color: var(--color-yellow);
+    }
+
+    .key.absent {
+      background: #eef0f5;
+      color: var(--color-faint);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 520px) {
+      .demo-shell {
+        padding: 14px;
+      }
+
+      .demo-panel {
+        padding: 18px;
+        min-height: 520px;
+      }
+
+      .widget-card {
+        top: auto;
+        bottom: 10px;
+        transform: translateX(-50%);
+        width: calc(100vw - 20px);
+        max-height: calc(100vh - 20px);
+        border-radius: var(--radius-md);
+      }
+
+      .widget-body {
+        padding: 14px;
+      }
+
+      .widget-header {
+        padding: 14px;
+      }
+
+      .daily-line {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .pill {
+        max-width: 100%;
+        white-space: normal;
+      }
+
+      .board {
+        padding: 10px;
+      }
+
+      .guess-row {
+        gap: 4px;
+      }
+
+      .guess-form {
+        grid-template-columns: 1fr;
+      }
+
+      .submit-button {
+        width: 100%;
+      }
+
+      .actions,
+      .stat-strip {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 1ms !important;
+        scroll-behavior: auto !important;
+        transition-duration: 1ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="demo-shell">
+    <section class="demo-panel" aria-labelledby="demo-title">
+      <div class="demo-top">
+        <svg class="iq-mark" viewBox="0 0 64 64" aria-hidden="true">
+          <path fill="currentColor" d="M23.5 8.5c-6.5 0-11.8 5-11.8 11.3 0 1.1.2 2.2.5 3.2A11.6 11.6 0 0 0 6 33.4c0 5 3.1 9.3 7.5 11a12.5 12.5 0 0 0 22.1 6.8A12.5 12.5 0 0 0 57 42.4a11.8 11.8 0 0 0-4.6-21.8v-.8c0-6.3-5.3-11.3-11.8-11.3-3.4 0-6.5 1.4-8.6 3.7a11.8 11.8 0 0 0-8.5-3.7Zm-4.2 17.1c0-2.5 2-4.5 4.5-4.5 1.5 0 2.8.7 3.6 1.8a3 3 0 0 0 5.1 0 4.5 4.5 0 0 1 8.1 2.7 3 3 0 0 0 3 3h1.5a4.7 4.7 0 0 1 0 9.4h-2.4a3 3 0 0 0-3 3v1.6a5.6 5.6 0 0 1-10.1 3.4 3 3 0 0 0-4.8 0 5.6 5.6 0 0 1-10.1-3.4v-1.3a3 3 0 0 0-2.5-3 4.8 4.8 0 0 1 .6-9.5h1.9a3 3 0 0 0 2.9-3.7 4 4 0 0 1-.3-1.5Z"/>
+        </svg>
+        <strong>IQ.wiki</strong>
+      </div>
+      <h1 id="demo-title">Daily Web3 knowledge, built into IQ.wiki.</h1>
+      <p class="demo-copy">A lightweight daily challenge for project pages, people, tokens, glossary terms, and events. The widget is styled to sit naturally inside IQ.wiki while keeping the game quick and shareable.</p>
+      <button class="button button-primary open-widget" type="button" id="openWidget">
+        <span aria-hidden="true">🧠</span>
+        Play today
+      </button>
+    </section>
+  </main>
+
+  <div class="widget-root" id="widgetRoot" aria-hidden="true">
+    <div class="widget-backdrop" data-close></div>
+    <section class="widget-card" role="dialog" aria-modal="true" aria-labelledby="widgetTitle">
+      <header class="widget-header">
+        <div class="brand-lockup">
+          <svg class="iq-mark" viewBox="0 0 64 64" aria-hidden="true">
+            <path fill="currentColor" d="M23.5 8.5c-6.5 0-11.8 5-11.8 11.3 0 1.1.2 2.2.5 3.2A11.6 11.6 0 0 0 6 33.4c0 5 3.1 9.3 7.5 11a12.5 12.5 0 0 0 22.1 6.8A12.5 12.5 0 0 0 57 42.4a11.8 11.8 0 0 0-4.6-21.8v-.8c0-6.3-5.3-11.3-11.8-11.3-3.4 0-6.5 1.4-8.6 3.7a11.8 11.8 0 0 0-8.5-3.7Zm-4.2 17.1c0-2.5 2-4.5 4.5-4.5 1.5 0 2.8.7 3.6 1.8a3 3 0 0 0 5.1 0 4.5 4.5 0 0 1 8.1 2.7 3 3 0 0 0 3 3h1.5a4.7 4.7 0 0 1 0 9.4h-2.4a3 3 0 0 0-3 3v1.6a5.6 5.6 0 0 1-10.1 3.4 3 3 0 0 0-4.8 0 5.6 5.6 0 0 1-10.1-3.4v-1.3a3 3 0 0 0-2.5-3 4.8 4.8 0 0 1 .6-9.5h1.9a3 3 0 0 0 2.9-3.7 4 4 0 0 1-.3-1.5Z"/>
+          </svg>
+          <div>
+            <h2 class="brand-title" id="widgetTitle">IQ.wiki Word Brain</h2>
+            <p class="brand-subtitle">5 tries. One Web3 answer.</p>
+          </div>
+        </div>
+        <button class="icon-button" type="button" aria-label="Close game" title="Close" data-close>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m18 6-12 12M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </header>
+
+      <div class="widget-body">
+        <div class="daily-line">
+          <span id="dailyDate"></span>
+          <span class="pill" id="categoryLabel"></span>
+        </div>
+
+        <div class="board" id="board" aria-label="Guess board"></div>
+
+        <form class="guess-form" id="guessForm">
+          <label class="sr-only" for="guessInput">Your guess</label>
+          <input class="guess-input" id="guessInput" type="text" autocomplete="off" spellcheck="false">
+          <button class="button button-dark submit-button" type="submit">Guess</button>
+        </form>
+        <p class="message" id="message" role="status" aria-live="polite"></p>
+
+        <div class="keyboard" id="keyboard" aria-label="On-screen keyboard"></div>
+
+        <section class="result-panel" id="resultPanel" aria-live="polite">
+          <p id="resultCopy"></p>
+          <div class="stat-strip">
+            <div class="stat">
+              <strong id="attemptStat">-</strong>
+              <span>Attempts used</span>
+            </div>
+            <div class="stat">
+              <strong id="percentStat">-</strong>
+              <span>Matched your score</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="button button-primary share-button" type="button" id="shareButton">Share result</button>
+            <a class="button button-dark read-button" id="readButton" target="_blank" rel="noopener noreferrer">Read more</a>
+          </div>
+          <button class="button button-ghost reset-button" type="button" id="resetButton">Replay demo state</button>
+          <pre class="share-preview" id="sharePreview"></pre>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <template id="brainTemplate">
+    <svg class="brain-image" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M23.5 8.5c-6.5 0-11.8 5-11.8 11.3 0 1.1.2 2.2.5 3.2A11.6 11.6 0 0 0 6 33.4c0 5 3.1 9.3 7.5 11a12.5 12.5 0 0 0 22.1 6.8A12.5 12.5 0 0 0 57 42.4a11.8 11.8 0 0 0-4.6-21.8v-.8c0-6.3-5.3-11.3-11.8-11.3-3.4 0-6.5 1.4-8.6 3.7a11.8 11.8 0 0 0-8.5-3.7Zm-4.2 17.1c0-2.5 2-4.5 4.5-4.5 1.5 0 2.8.7 3.6 1.8a3 3 0 0 0 5.1 0 4.5 4.5 0 0 1 8.1 2.7 3 3 0 0 0 3 3h1.5a4.7 4.7 0 0 1 0 9.4h-2.4a3 3 0 0 0-3 3v1.6a5.6 5.6 0 0 1-10.1 3.4 3 3 0 0 0-4.8 0 5.6 5.6 0 0 1-10.1-3.4v-1.3a3 3 0 0 0-2.5-3 4.8 4.8 0 0 1 .6-9.5h1.9a3 3 0 0 0 2.9-3.7 4 4 0 0 1-.3-1.5Z"/>
+    </svg>
+  </template>
+
+  <script>
+    const entries = [
+      { title: "ANATOLY YAKOVENKO", category: "People in crypto", slug: "anatoly-yakovenko" },
+      { title: "OPEN USD", category: "Cryptoassets", slug: "open-usd" },
+      { title: "JEFF YAN", category: "People in crypto", slug: "jeff-yan" },
+      { title: "GAMEFI ORG", category: "Projects & Protocols", slug: "gamefi-org" },
+      { title: "AXIOMOS", category: "Projects & Protocols", slug: "axiomos" },
+      { title: "WATS WALLET", category: "Projects & Protocols", slug: "wats-wallet" },
+      { title: "ARTHUR HAYES", category: "People in crypto", slug: "arthur-hayes" },
+      { title: "ABRACADABRA", category: "Projects & Protocols", slug: "abracadabra" },
+      { title: "MONEY LEGOS", category: "Glossary", slug: "money-legos" },
+      { title: "PRIVACY POOLS", category: "Glossary", slug: "privacy-pools" },
+      { title: "GEODNET", category: "Projects & Protocols", slug: "geodnet" },
+      { title: "ETHLABS", category: "Organizations", slug: "ethlabs" },
+      { title: "BITCOIN", category: "Cryptoassets", slug: "bitcoin" },
+      { title: "ETHEREUM", category: "Projects & Protocols", slug: "ethereum" },
+      { title: "SOLANA", category: "Projects & Protocols", slug: "solana" },
+      { title: "DEFI", category: "Glossary", slug: "defi" },
+      { title: "VITALIK BUTERIN", category: "People in crypto", slug: "vitalik-buterin" },
+      { title: "CHAINLINK", category: "Projects & Protocols", slug: "chainlink" },
+      { title: "TOKENOMICS", category: "Glossary", slug: "tokenomics" },
+      { title: "CONSENSUS", category: "Events", slug: "consensus" }
+    ];
+
+    const maxGuesses = 5;
+    const storagePrefix = "iq-word-brain:";
+    const todayKey = getUtcDateKey(new Date());
+    const answer = entries[pickDailyIndex(todayKey, entries.length)];
+    const answerPattern = answer.title.replace(/[^A-Z0-9 ]/g, "");
+    const answerComparable = compact(answerPattern);
+    const rowLength = answerPattern.length;
+    const stateKey = storagePrefix + todayKey;
+    const cells = [];
+    const keyboardState = {};
+    let restoreFocusTarget = null;
+    let shareResetTimer = 0;
+    let state = loadState();
+
+    const widgetRoot = document.getElementById("widgetRoot");
+    const board = document.getElementById("board");
+    const guessForm = document.getElementById("guessForm");
+    const guessInput = document.getElementById("guessInput");
+    const message = document.getElementById("message");
+    const resultPanel = document.getElementById("resultPanel");
+    const resultCopy = document.getElementById("resultCopy");
+    const attemptStat = document.getElementById("attemptStat");
+    const percentStat = document.getElementById("percentStat");
+    const readButton = document.getElementById("readButton");
+    const shareButton = document.getElementById("shareButton");
+    const sharePreview = document.getElementById("sharePreview");
+    const resetButton = document.getElementById("resetButton");
+    const keyboard = document.getElementById("keyboard");
+
+    document.getElementById("dailyDate").textContent = new Intl.DateTimeFormat(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric"
+    }).format(new Date(todayKey + "T12:00:00Z"));
+    document.getElementById("categoryLabel").textContent = `Category: ${answer.category}`;
+
+    document.getElementById("openWidget").addEventListener("click", () => openWidget());
+    widgetRoot.querySelectorAll("[data-close]").forEach((button) => {
+      button.addEventListener("click", () => closeWidget());
+    });
+
+    guessForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      submitGuess();
+    });
+
+    guessInput.addEventListener("input", () => {
+      guessInput.value = cleanInput(guessInput.value);
+    });
+
+    shareButton.addEventListener("click", shareResult);
+    resetButton.addEventListener("click", () => {
+      clearSavedState(stateKey);
+      state = loadState();
+      render();
+      guessInput.disabled = false;
+      guessInput.focus();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && widgetRoot.classList.contains("is-open")) closeWidget();
+    });
+
+    render();
+
+    function getUtcDateKey(date) {
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(date.getUTCDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function pickDailyIndex(dateText, count) {
+      if (!Number.isInteger(count) || count <= 0) return 0;
+      let hash = 2166136261;
+      for (const char of String(dateText)) {
+        hash ^= char.charCodeAt(0);
+        hash = Math.imul(hash, 16777619);
+      }
+      return (hash >>> 0) % count;
+    }
+
+    function loadState() {
+      const saved = getSavedState(stateKey);
+      if (saved) {
+        try {
+          return normalizeSavedState(JSON.parse(saved));
+        } catch (error) {}
+      }
+      return createEmptyState();
+    }
+
+    function createEmptyState() {
+      return { answer: answerComparable, guesses: [], done: false, won: false };
+    }
+
+    function normalizeSavedState(parsed) {
+      if (!parsed || parsed.answer !== answerComparable || !Array.isArray(parsed.guesses)) {
+        return createEmptyState();
+      }
+
+      const guesses = parsed.guesses
+        .map((guess) => compact(guess))
+        .filter((guess) => guess.length === answerComparable.length)
+        .slice(0, maxGuesses);
+      const won = guesses.includes(answerComparable);
+      const done = won || guesses.length >= maxGuesses;
+      return { answer: answerComparable, guesses, done, won };
+    }
+
+    function saveState() {
+      setSavedState(stateKey, JSON.stringify(state));
+    }
+
+    function getSavedState(key) {
+      try {
+        return window.localStorage.getItem(key);
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function setSavedState(key, value) {
+      try {
+        window.localStorage.setItem(key, value);
+      } catch (error) {}
+    }
+
+    function clearSavedState(key) {
+      try {
+        window.localStorage.removeItem(key);
+      } catch (error) {}
+    }
+
+    function render() {
+      board.innerHTML = "";
+      keyboardState.A = keyboardState.A || "";
+      cells.length = 0;
+      board.style.setProperty("--letters", rowLength);
+
+      for (let row = 0; row < maxGuesses; row += 1) {
+        const rowElement = document.createElement("div");
+        rowElement.className = "guess-row";
+        rowElement.style.setProperty("--letters", rowLength);
+        const guess = state.guesses[row];
+        const statuses = guess ? scoreGuess(guess) : [];
+        const displayGuess = guess ? fitGuessToPattern(guess) : "";
+
+        for (let col = 0; col < rowLength; col += 1) {
+          const cell = document.createElement("div");
+          const answerChar = answerPattern[col];
+          const isSpace = answerChar === " ";
+          const status = statuses[col] || "";
+          cell.className = `brain-cell ${isSpace ? "space" : ""} ${status}`;
+          cell.appendChild(document.getElementById("brainTemplate").content.firstElementChild.cloneNode(true));
+          const letter = document.createElement("span");
+          letter.className = "brain-letter";
+          letter.textContent = isSpace ? "" : (displayGuess[col] || "");
+          cell.appendChild(letter);
+          rowElement.appendChild(cell);
+        }
+        board.appendChild(rowElement);
+      }
+
+      updateKeyboard();
+      renderKeyboard();
+      syncResultPanel();
+      guessInput.maxLength = rowLength + 6;
+      guessInput.placeholder = `${answerComparable.length} letters${answerPattern.includes(" ") ? ", spaces optional" : ""}`;
+      guessInput.value = "";
+      guessInput.disabled = state.done;
+      guessForm.querySelector("button").disabled = state.done;
+
+      if (!state.done) {
+        setMessage(`${maxGuesses - state.guesses.length} ${maxGuesses - state.guesses.length === 1 ? "try" : "tries"} left. Guess any word or phrase with the right length.`, "");
+      }
+    }
+
+    function submitGuess() {
+      if (state.done) return;
+      const guess = compact(guessInput.value);
+
+      if (!guess) {
+        setMessage("Type any word or phrase to make a guess.", "loss");
+        return;
+      }
+
+      if (guess.length !== answerComparable.length) {
+        setMessage(`Today’s answer has ${answerComparable.length} letters or numbers.`, "loss");
+        return;
+      }
+
+      state.guesses.push(guess);
+      state.won = guess === answerComparable;
+      state.done = state.won || state.guesses.length === maxGuesses;
+      saveState();
+      render();
+
+      if (state.won) {
+        setMessage("Correct. The brain is pleased.", "win");
+      } else if (state.done) {
+        setMessage(`Out of tries. Today’s answer was ${answer.title}.`, "loss");
+      }
+    }
+
+    function scoreGuess(guess) {
+      const result = Array(rowLength).fill("absent");
+      const fittedGuess = fitGuessToPattern(guess);
+      const answerChars = answerPattern.split("");
+      const remaining = {};
+
+      answerChars.forEach((char, index) => {
+        if (char === " ") {
+          result[index] = "space";
+          return;
+        }
+        if (fittedGuess[index] === char) {
+          result[index] = "correct";
+        } else {
+          remaining[char] = (remaining[char] || 0) + 1;
+        }
+      });
+
+      fittedGuess.split("").forEach((char, index) => {
+        if (answerChars[index] === " " || result[index] === "correct") return;
+        if (remaining[char] > 0) {
+          result[index] = "present";
+          remaining[char] -= 1;
+        }
+      });
+
+      return result;
+    }
+
+    function fitGuessToPattern(guess) {
+      const chars = guess.split("");
+      let pointer = 0;
+      return answerPattern.split("").map((char) => {
+        if (char === " ") return " ";
+        const next = chars[pointer] || "";
+        pointer += 1;
+        return next;
+      }).join("");
+    }
+
+    function compact(value) {
+      return cleanInput(value).replace(/[^A-Z0-9]/g, "");
+    }
+
+    function cleanInput(value) {
+      return String(value || "")
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9 ]/g, "")
+        .toUpperCase();
+    }
+
+    function setMessage(text, tone) {
+      message.textContent = text;
+      message.className = `message ${tone || ""}`;
+    }
+
+    function openWidget() {
+      restoreFocusTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      widgetRoot.classList.add("is-open");
+      widgetRoot.setAttribute("aria-hidden", "false");
+      window.setTimeout(() => guessInput.focus(), 80);
+    }
+
+    function closeWidget() {
+      widgetRoot.classList.remove("is-open");
+      widgetRoot.setAttribute("aria-hidden", "true");
+      if (restoreFocusTarget && typeof restoreFocusTarget.focus === "function") {
+        restoreFocusTarget.focus();
+      }
+      restoreFocusTarget = null;
+    }
+
+    function syncResultPanel() {
+      if (!state.done) {
+        resultPanel.classList.remove("is-visible");
+        return;
+      }
+
+      resultPanel.classList.add("is-visible");
+      const attempts = state.won ? state.guesses.length : "X";
+      const percentage = state.won ? getAttemptPercentage(state.guesses.length) : 6;
+      const answerAnchor = document.createElement("button");
+      answerAnchor.className = "answer-link";
+      answerAnchor.type = "button";
+      answerAnchor.textContent = `read more about ${answer.title}`;
+      answerAnchor.addEventListener("click", openWikiPage);
+
+      resultCopy.replaceChildren(
+        document.createTextNode(state.won ? `You solved it in ${state.guesses.length}. Click to ` : "No solve today. Click to "),
+        answerAnchor,
+        document.createTextNode(".")
+      );
+
+      attemptStat.textContent = `${attempts}/5`;
+      percentStat.textContent = `${percentage}%`;
+      readButton.href = getWikiUrl();
+      readButton.textContent = `Read ${answer.title}`;
+      sharePreview.textContent = buildShareText();
+    }
+
+    function getAttemptPercentage(attempt) {
+      const distribution = seededDistribution(todayKey);
+      return distribution[attempt - 1];
+    }
+
+    function seededDistribution(seed) {
+      const raw = [11, 18, 26, 22, 13];
+      const offset = pickDailyIndex(seed + answer.title, 9) - 4;
+      return raw.map((value, index) => Math.max(4, Math.min(44, value + offset + index)));
+    }
+
+    function getWikiUrl() {
+      return `https://iq.wiki/wiki/${encodeURIComponent(answer.slug)}`;
+    }
+
+    function openWikiPage() {
+      const opened = window.open(getWikiUrl(), "_blank", "noopener,noreferrer");
+      if (!opened) window.location.href = getWikiUrl();
+    }
+
+    function buildShareText() {
+      const title = state.won ? `${state.guesses.length}/5` : "X/5";
+      const lines = state.guesses.map((guess) => {
+        const statuses = scoreGuess(guess).filter((status) => status !== "space");
+        const pink = statuses.filter((status) => status === "correct").length;
+        const yellow = statuses.filter((status) => status === "present").length;
+        return `${"🧠".repeat(pink)}${"💛".repeat(yellow)}${"·".repeat(Math.max(0, answerComparable.length - pink - yellow))}`;
+      });
+      return `IQ.wiki Word Brain ${todayKey} ${title}\n${lines.join("\n")}\nhttps://iq.wiki`;
+    }
+
+    async function shareResult() {
+      if (shareButton.disabled) return;
+      shareButton.disabled = true;
+      const text = buildShareText();
+      sharePreview.textContent = text;
+      try {
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: "IQ.wiki Word Brain", text, url: "https://iq.wiki" });
+            return;
+          } catch (error) {}
+        }
+        if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+        await navigator.clipboard.writeText(text);
+        shareButton.textContent = "Copied";
+      } catch (error) {
+        shareButton.textContent = "Copy failed";
+        setMessage("Copy blocked. Share text is shown below.", "loss");
+      } finally {
+        window.clearTimeout(shareResetTimer);
+        shareResetTimer = window.setTimeout(() => {
+          shareButton.textContent = "Share result";
+          shareButton.disabled = false;
+        }, 1400);
+      }
+    }
+
+    function updateKeyboard() {
+      Object.keys(keyboardState).forEach((key) => delete keyboardState[key]);
+      const rank = { "": 0, absent: 1, present: 2, correct: 3 };
+      state.guesses.forEach((guess) => {
+        const statuses = scoreGuess(guess);
+        const fitted = fitGuessToPattern(guess);
+        fitted.split("").forEach((char, index) => {
+          if (!/[A-Z0-9]/.test(char)) return;
+          const status = statuses[index];
+          if (rank[status] > rank[keyboardState[char] || ""]) {
+            keyboardState[char] = status;
+          }
+        });
+      });
+    }
+
+    function renderKeyboard() {
+      const rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+      keyboard.innerHTML = "";
+      rows.forEach((row, index) => {
+        const rowElement = document.createElement("div");
+        rowElement.className = "key-row";
+        if (index === 2) {
+          rowElement.appendChild(makeKey("DEL", "wide"));
+        }
+        row.split("").forEach((letter) => rowElement.appendChild(makeKey(letter, "")));
+        if (index === 2) {
+          rowElement.appendChild(makeKey("ENTER", "wide"));
+        }
+        keyboard.appendChild(rowElement);
+      });
+    }
+
+    function makeKey(label, extraClass) {
+      const key = document.createElement("button");
+      key.type = "button";
+      key.className = `key ${extraClass} ${keyboardState[label] || ""}`;
+      key.textContent = label;
+      key.addEventListener("click", () => {
+        if (state.done) return;
+        if (label === "DEL") {
+          guessInput.value = guessInput.value.slice(0, -1);
+        } else if (label === "ENTER") {
+          submitGuess();
+        } else {
+          guessInput.value = (guessInput.value + label).slice(0, rowLength + 6);
+        }
+        guessInput.focus();
+      });
+      return key;
+    }
+  </script>
+</body>
+</html>
