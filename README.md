@@ -13,6 +13,9 @@ The included workflow publishes the repo root as a static site. No install or bu
 
 ## Files
 
-- `index.html` - self-contained widget page.
+- `index.html` - widget page and game logic.
+- `assets/iq-logo-pink.svg` - official IQ.wiki brand mark.
 - `.nojekyll` - disables Jekyll processing.
 - `.github/workflows/pages.yml` - deploys to GitHub Pages.
+
+Visual styling follows the [IQ.wiki brand kit](https://iq.wiki/branding).
