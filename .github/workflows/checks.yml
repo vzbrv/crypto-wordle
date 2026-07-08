@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Check required files
         run: test -f index.html && test -f .nojekyll
@@ -29,4 +31,6 @@ jobs:
           NODE
 
       - name: Check whitespace
-        run: git diff --check HEAD^ HEAD
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: git diff --check "$BASE_SHA" "$GITHUB_SHA"
