@@ -3,7 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="./assets/iq-logo-pink.svg" type="image/svg+xml">
   <title>IQ.wiki Web3 Wordle Widget</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --color-brand: #ff4fb8;
@@ -676,15 +680,191 @@
         transition-duration: 1ms !important;
       }
     }
+
+    /* IQ.wiki brand alignment */
+    :root {
+      --color-brand: #ff5caa;
+      --color-brand-strong: #ff1a88;
+      --color-brand-soft: #fff0f7;
+      --color-ink: #0f172a;
+      --color-ink-soft: #17202b;
+      --color-muted: #475569;
+      --color-faint: #94a3b8;
+      --color-border: #e5e7eb;
+      --color-border-strong: #cbd5e1;
+      --color-page: #ffffff;
+      --color-surface-glass: #ffffff;
+      --radius-sm: 8px;
+      --radius-md: 8px;
+      --radius-lg: 8px;
+      --shadow-soft: none;
+      --shadow-float: 0 24px 64px rgba(15, 23, 42, 0.18);
+      --shadow-brand: none;
+      font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    }
+
+    body {
+      background: #fff;
+    }
+
+    .demo-shell {
+      min-height: 100vh;
+      padding: 0;
+      background-image:
+        linear-gradient(#f3f4f6 1px, transparent 1px),
+        linear-gradient(90deg, #f3f4f6 1px, transparent 1px);
+      background-size: 76px 76px;
+    }
+
+    .demo-panel {
+      width: 100%;
+      min-height: 100vh;
+      padding: clamp(24px, 6vw, 72px) max(24px, calc((100vw - 1120px) / 2));
+      border: 0;
+      border-radius: 0;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+
+    .demo-top {
+      margin-bottom: clamp(72px, 13vh, 140px);
+      color: var(--color-ink);
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .iq-mark {
+      width: 42px;
+      height: 36px;
+      object-fit: contain;
+    }
+
+    .demo-panel h1 {
+      max-width: 760px;
+      font-size: clamp(2.5rem, 6vw, 4.75rem);
+      line-height: 1.02;
+      font-weight: 600;
+    }
+
+    .demo-copy {
+      color: var(--color-muted);
+      font-size: 1.05rem;
+    }
+
+    .button {
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    .button:hover {
+      transform: none;
+    }
+
+    .button-primary {
+      background: var(--color-brand);
+      box-shadow: none;
+    }
+
+    .button-primary:hover {
+      background: var(--color-brand-strong);
+    }
+
+    .button-dark {
+      background: var(--color-ink);
+      box-shadow: none;
+    }
+
+    .widget-backdrop {
+      background: rgba(15, 23, 42, 0.42);
+      backdrop-filter: blur(4px);
+    }
+
+    .widget-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+    }
+
+    .widget-header {
+      background: #fff;
+      border-bottom: 1px solid var(--color-border);
+      backdrop-filter: none;
+    }
+
+    .brand-lockup .iq-mark {
+      width: 34px;
+      height: 30px;
+    }
+
+    .brand-title {
+      font-weight: 700;
+    }
+
+    .brand-subtitle {
+      font-weight: 500;
+    }
+
+    .icon-button,
+    .button-ghost,
+    .key {
+      background: #fff;
+      border-radius: 8px;
+    }
+
+    .pill {
+      color: var(--color-brand-strong);
+      border-color: #ffc0df;
+      background: var(--color-brand-soft);
+    }
+
+    .board {
+      border-radius: 8px;
+      background: #fafcf8;
+      box-shadow: none;
+    }
+
+    .brain-cell {
+      border-radius: 6px;
+    }
+
+    .brain-image {
+      color: var(--color-brand);
+    }
+
+    .guess-input {
+      border-radius: 8px;
+    }
+
+    .result-panel,
+    .stat {
+      border-radius: 8px;
+    }
+
+    @media (max-width: 520px) {
+      .demo-shell {
+        padding: 0;
+      }
+
+      .demo-panel {
+        padding: 24px 20px 40px;
+      }
+
+      .demo-top {
+        margin-bottom: 72px;
+      }
+
+      .widget-card {
+        border-radius: 8px;
+      }
+    }
   </style>
 </head>
 <body>
   <main class="demo-shell">
     <section class="demo-panel" aria-labelledby="demo-title">
       <div class="demo-top">
-        <svg class="iq-mark" viewBox="0 0 64 64" aria-hidden="true">
-          <path fill="currentColor" d="M23.5 8.5c-6.5 0-11.8 5-11.8 11.3 0 1.1.2 2.2.5 3.2A11.6 11.6 0 0 0 6 33.4c0 5 3.1 9.3 7.5 11a12.5 12.5 0 0 0 22.1 6.8A12.5 12.5 0 0 0 57 42.4a11.8 11.8 0 0 0-4.6-21.8v-.8c0-6.3-5.3-11.3-11.8-11.3-3.4 0-6.5 1.4-8.6 3.7a11.8 11.8 0 0 0-8.5-3.7Zm-4.2 17.1c0-2.5 2-4.5 4.5-4.5 1.5 0 2.8.7 3.6 1.8a3 3 0 0 0 5.1 0 4.5 4.5 0 0 1 8.1 2.7 3 3 0 0 0 3 3h1.5a4.7 4.7 0 0 1 0 9.4h-2.4a3 3 0 0 0-3 3v1.6a5.6 5.6 0 0 1-10.1 3.4 3 3 0 0 0-4.8 0 5.6 5.6 0 0 1-10.1-3.4v-1.3a3 3 0 0 0-2.5-3 4.8 4.8 0 0 1 .6-9.5h1.9a3 3 0 0 0 2.9-3.7 4 4 0 0 1-.3-1.5Z"/>
-        </svg>
+        <img class="iq-mark" src="./assets/iq-logo-pink.svg" alt="">
         <strong>IQ.wiki</strong>
       </div>
       <h1 id="demo-title">Daily Web3 knowledge, built into IQ.wiki.</h1>
@@ -701,9 +881,7 @@
     <section class="widget-card" role="dialog" aria-modal="true" aria-labelledby="widgetTitle">
       <header class="widget-header">
         <div class="brand-lockup">
-          <svg class="iq-mark" viewBox="0 0 64 64" aria-hidden="true">
-            <path fill="currentColor" d="M23.5 8.5c-6.5 0-11.8 5-11.8 11.3 0 1.1.2 2.2.5 3.2A11.6 11.6 0 0 0 6 33.4c0 5 3.1 9.3 7.5 11a12.5 12.5 0 0 0 22.1 6.8A12.5 12.5 0 0 0 57 42.4a11.8 11.8 0 0 0-4.6-21.8v-.8c0-6.3-5.3-11.3-11.8-11.3-3.4 0-6.5 1.4-8.6 3.7a11.8 11.8 0 0 0-8.5-3.7Zm-4.2 17.1c0-2.5 2-4.5 4.5-4.5 1.5 0 2.8.7 3.6 1.8a3 3 0 0 0 5.1 0 4.5 4.5 0 0 1 8.1 2.7 3 3 0 0 0 3 3h1.5a4.7 4.7 0 0 1 0 9.4h-2.4a3 3 0 0 0-3 3v1.6a5.6 5.6 0 0 1-10.1 3.4 3 3 0 0 0-4.8 0 5.6 5.6 0 0 1-10.1-3.4v-1.3a3 3 0 0 0-2.5-3 4.8 4.8 0 0 1 .6-9.5h1.9a3 3 0 0 0 2.9-3.7 4 4 0 0 1-.3-1.5Z"/>
-          </svg>
+          <img class="iq-mark" src="./assets/iq-logo-pink.svg" alt="">
           <div>
             <h2 class="brand-title" id="widgetTitle">IQ.wiki Word Brain</h2>
             <p class="brand-subtitle">5 tries. One Web3 answer.</p>
@@ -757,9 +935,7 @@
   </div>
 
   <template id="brainTemplate">
-    <svg class="brain-image" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-      <path fill="currentColor" d="M23.5 8.5c-6.5 0-11.8 5-11.8 11.3 0 1.1.2 2.2.5 3.2A11.6 11.6 0 0 0 6 33.4c0 5 3.1 9.3 7.5 11a12.5 12.5 0 0 0 22.1 6.8A12.5 12.5 0 0 0 57 42.4a11.8 11.8 0 0 0-4.6-21.8v-.8c0-6.3-5.3-11.3-11.8-11.3-3.4 0-6.5 1.4-8.6 3.7a11.8 11.8 0 0 0-8.5-3.7Zm-4.2 17.1c0-2.5 2-4.5 4.5-4.5 1.5 0 2.8.7 3.6 1.8a3 3 0 0 0 5.1 0 4.5 4.5 0 0 1 8.1 2.7 3 3 0 0 0 3 3h1.5a4.7 4.7 0 0 1 0 9.4h-2.4a3 3 0 0 0-3 3v1.6a5.6 5.6 0 0 1-10.1 3.4 3 3 0 0 0-4.8 0 5.6 5.6 0 0 1-10.1-3.4v-1.3a3 3 0 0 0-2.5-3 4.8 4.8 0 0 1 .6-9.5h1.9a3 3 0 0 0 2.9-3.7 4 4 0 0 1-.3-1.5Z"/>
-    </svg>
+    <img class="brain-image" src="./assets/iq-logo-pink.svg" alt="" aria-hidden="true">
   </template>
 
   <script>
