@@ -3,6 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Play IQ.wiki Word Brain, a daily Web3 word challenge.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="IQ.wiki Word Brain">
+  <meta property="og:description" content="Test your Web3 knowledge with a new word challenge every day.">
+  <meta property="og:url" content="https://vzbrv.github.io/crypto-wordle/">
+  <meta property="og:image" content="https://vzbrv.github.io/crypto-wordle/assets/iq-logo-pink.svg">
+  <link rel="canonical" href="https://vzbrv.github.io/crypto-wordle/">
   <link rel="icon" href="./assets/iq-logo-pink.svg" type="image/svg+xml">
   <title>IQ.wiki Web3 Wordle Widget</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -725,7 +732,7 @@
     }
 
     .demo-top {
-      margin-bottom: clamp(72px, 13vh, 140px);
+      margin-bottom: clamp(40px, 8vh, 72px);
       color: var(--color-ink);
       font-size: 1.1rem;
       font-weight: 700;
@@ -739,7 +746,7 @@
 
     .demo-panel h1 {
       max-width: 760px;
-      font-size: clamp(2.5rem, 6vw, 4.75rem);
+      font-size: clamp(2.5rem, 5vw, 4rem);
       line-height: 1.02;
       font-weight: 600;
     }
@@ -752,6 +759,12 @@
     .button {
       border-radius: 8px;
       font-weight: 600;
+    }
+
+    .button-icon {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
     }
 
     .button:hover {
@@ -848,7 +861,7 @@
       }
 
       .demo-top {
-        margin-bottom: 72px;
+        margin-bottom: 32px;
       }
 
       .widget-card {
@@ -865,9 +878,9 @@
         <strong>IQ.wiki</strong>
       </div>
       <h1 id="demo-title">Daily Web3 knowledge, built into IQ.wiki.</h1>
-      <p class="demo-copy">A lightweight daily challenge for project pages, people, tokens, glossary terms, and events. The widget is styled to sit naturally inside IQ.wiki while keeping the game quick and shareable.</p>
+      <p class="demo-copy">Identify a Web3 project, person, token, term, or event in five guesses. A new challenge arrives every day.</p>
       <button class="button button-primary open-widget" type="button" id="openWidget">
-        <span aria-hidden="true">🧠</span>
+        <img class="button-icon" src="./assets/iq-logo-pink.svg" alt="" aria-hidden="true">
         Play today
       </button>
     </section>
