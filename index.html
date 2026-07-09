@@ -947,7 +947,53 @@
       { title: "VITALIK BUTERIN", category: "People in crypto", slug: "vitalik-buterin" },
       { title: "CHAINLINK", category: "Projects & Protocols", slug: "chainlink" },
       { title: "TOKENOMICS", category: "Glossary", slug: "tokenomics" },
-      { title: "CONSENSUS", category: "Events", slug: "consensus" }
+      { title: "CONSENSUS", category: "Events", slug: "consensus" },
+      { title: "SATOSHI NAKAMOTO", category: "People in crypto", slug: "satoshi-nakamoto" },
+      { title: "GAVIN WOOD", category: "People in crypto", slug: "gavin-wood" },
+      { title: "BRIAN ARMSTRONG", category: "People in crypto", slug: "brian-armstrong" },
+      { title: "CARDANO", category: "Projects & Protocols", slug: "cardano" },
+      { title: "POLKADOT", category: "Projects & Protocols", slug: "polkadot" },
+      { title: "AVALANCHE", category: "Projects & Protocols", slug: "avalanche" },
+      { title: "UNISWAP", category: "Projects & Protocols", slug: "uniswap" },
+      { title: "AAVE", category: "Projects & Protocols", slug: "aave" },
+      { title: "COMPOUND", category: "Projects & Protocols", slug: "compound" },
+      { title: "MAKERDAO", category: "Projects & Protocols", slug: "makerdao" },
+      { title: "ARBITRUM", category: "Projects & Protocols", slug: "arbitrum" },
+      { title: "OPTIMISM", category: "Projects & Protocols", slug: "optimism" },
+      { title: "POLYGON", category: "Projects & Protocols", slug: "polygon" },
+      { title: "COSMOS", category: "Projects & Protocols", slug: "cosmos" },
+      { title: "CELESTIA", category: "Projects & Protocols", slug: "celestia" },
+      { title: "DOGECOIN", category: "Cryptoassets", slug: "dogecoin" },
+      { title: "LITECOIN", category: "Cryptoassets", slug: "litecoin" },
+      { title: "MONERO", category: "Cryptoassets", slug: "monero" },
+      { title: "TETHER", category: "Cryptoassets", slug: "tether" },
+      { title: "USD COIN", category: "Cryptoassets", slug: "usd-coin" },
+      { title: "LIDO", category: "Projects & Protocols", slug: "lido" },
+      { title: "CURVE FINANCE", category: "Projects & Protocols", slug: "curve-finance" },
+      { title: "SUSHISWAP", category: "Projects & Protocols", slug: "sushiswap" },
+      { title: "PANCAKESWAP", category: "Projects & Protocols", slug: "pancakeswap" },
+      { title: "METAMASK", category: "Products", slug: "metamask" },
+      { title: "OPENSEA", category: "Projects & Protocols", slug: "opensea" },
+      { title: "THE GRAPH", category: "Projects & Protocols", slug: "the-graph" },
+      { title: "FILECOIN", category: "Projects & Protocols", slug: "filecoin" },
+      { title: "PROOF OF STAKE", category: "Glossary", slug: "proof-of-stake" },
+      { title: "PROOF OF WORK", category: "Glossary", slug: "proof-of-work" },
+      { title: "SMART CONTRACT", category: "Glossary", slug: "smart-contract" },
+      { title: "ZERO KNOWLEDGE", category: "Glossary", slug: "zero-knowledge-proof" },
+      { title: "LIQUID STAKING", category: "Glossary", slug: "liquid-staking" },
+      { title: "YIELD FARMING", category: "Glossary", slug: "yield-farming" },
+      { title: "FLASH LOAN", category: "Glossary", slug: "flash-loan" },
+      { title: "ORACLE", category: "Glossary", slug: "blockchain-oracle" },
+      { title: "ROLLUP", category: "Glossary", slug: "rollup" },
+      { title: "SIDECHAIN", category: "Glossary", slug: "sidechain" }
+    ];
+    const guessTerms = [
+      "ALTCOIN", "BLOCKCHAIN", "BRIDGE", "COLD WALLET", "CRYPTO", "DAO", "DAPP",
+      "DEX", "DIGITAL ASSET", "ENS", "FIAT", "FORK", "GAS FEE", "GENESIS BLOCK",
+      "GOVERNANCE", "HASH RATE", "HOT WALLET", "IPFS", "LAYER ONE", "LAYER TWO",
+      "LEDGER", "LIQUIDITY", "MAINNET", "MINING", "MULTISIG", "NFT", "NODE",
+      "PRIVATE KEY", "PUBLIC KEY", "SEED PHRASE", "SHARDING", "STABLECOIN",
+      "STAKING", "TESTNET", "TOKEN", "VALIDATOR", "WALLET", "WEB3"
     ];
 
     const maxGuesses = 5;
@@ -957,6 +1003,7 @@
     const answerPattern = answer.title.replace(/[^A-Z0-9 ]/g, "");
     const answerComparable = compact(answerPattern);
     const rowLength = answerPattern.length;
+    const acceptedGuesses = new Set([...entries.map((entry) => entry.title), ...guessTerms].map(compact));
     const stateKey = storagePrefix + todayKey;
     const cells = [];
     const keyboardState = {};
@@ -1015,12 +1062,26 @@
 
     function pickDailyIndex(dateText, count) {
       if (!Number.isInteger(count) || count <= 0) return 0;
+      const dayNumber = Math.floor(Date.parse(`${dateText}T00:00:00Z`) / 86400000);
+      const cycle = Math.floor(dayNumber / count);
+      const dayInCycle = ((dayNumber % count) + count) % count;
+      let stride = Math.max(1, count - 1);
+      while (greatestCommonDivisor(stride, count) !== 1) stride -= 1;
+      return (hashText(`cycle:${cycle}`) % count + dayInCycle * stride) % count;
+    }
+
+    function hashText(value) {
       let hash = 2166136261;
-      for (const char of String(dateText)) {
+      for (const char of String(value)) {
         hash ^= char.charCodeAt(0);
         hash = Math.imul(hash, 16777619);
       }
-      return (hash >>> 0) % count;
+      return hash >>> 0;
+    }
+
+    function greatestCommonDivisor(a, b) {
+      while (b) [a, b] = [b, a % b];
+      return a;
     }
 
     function loadState() {
@@ -1044,7 +1105,7 @@
 
       const guesses = parsed.guesses
         .map((guess) => compact(guess))
-        .filter((guess) => guess.length === answerComparable.length)
+        .filter((guess) => guess.length === answerComparable.length && acceptedGuesses.has(guess))
         .slice(0, maxGuesses);
       const won = guesses.includes(answerComparable);
       const done = won || guesses.length >= maxGuesses;
@@ -1109,7 +1170,7 @@
       guessForm.querySelector("button").disabled = state.done;
 
       if (!state.done) {
-        setMessage(`${maxGuesses - state.guesses.length} ${maxGuesses - state.guesses.length === 1 ? "try" : "tries"} left. Guess any word or phrase with the right length.`, "");
+        setMessage(`${maxGuesses - state.guesses.length} ${maxGuesses - state.guesses.length === 1 ? "try" : "tries"} left. Guess a Web3 term with the right length.`, "");
       }
     }
 
@@ -1124,6 +1185,11 @@
 
       if (guess.length !== answerComparable.length) {
         setMessage(`Today’s answer has ${answerComparable.length} letters or numbers.`, "loss");
+        return;
+      }
+
+      if (!acceptedGuesses.has(guess)) {
+        setMessage("That isn’t in the Web3 guess list.", "loss");
         return;
       }
 
