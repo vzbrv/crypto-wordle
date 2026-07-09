@@ -70,6 +70,10 @@
       overflow: hidden;
     }
 
+    body.modal-open .demo-shell {
+      pointer-events: none;
+    }
+
     .demo-shell {
       min-height: 100vh;
       display: flex;
@@ -175,12 +179,16 @@
     .widget-root {
       position: fixed;
       inset: 0;
-      display: none;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
       z-index: 20;
     }
 
     .widget-root.is-open {
-      display: block;
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
     }
 
     .widget-backdrop {
@@ -195,8 +203,10 @@
       z-index: 1;
       left: 50%;
       top: 50%;
-      width: min(500px, calc(100vw - 28px));
-      max-height: min(820px, calc(100vh - 28px));
+      right: auto;
+      width: min(500px, calc(100dvw - 32px));
+      max-width: calc(100dvw - 32px);
+      max-height: min(820px, calc(100dvh - 32px));
       transform: translate(-50%, -50%);
       overflow: auto;
       background:
@@ -553,18 +563,22 @@
       display: grid;
       gap: 6px;
       margin-top: 16px;
+      width: 100%;
     }
 
     .key-row {
       display: flex;
       justify-content: center;
-      gap: 5px;
+      gap: 4px;
     }
 
     .key {
+      flex: 1 1 0;
       min-width: 0;
-      width: 8.3%;
-      height: 34px;
+      max-width: 42px;
+      min-height: 44px;
+      height: 44px;
+      padding: 0 2px;
       border: 1px solid var(--color-border);
       border-radius: var(--radius-xs);
       background: rgba(255, 255, 255, 0.82);
@@ -582,7 +596,9 @@
     }
 
     .key.wide {
-      width: 14%;
+      flex: 1.45 1 0;
+      width: auto;
+      max-width: 64px;
       font-size: 0.68rem;
     }
 
@@ -627,9 +643,11 @@
       .widget-card {
         top: auto;
         bottom: 10px;
+        right: auto;
         transform: translateX(-50%);
-        width: calc(100vw - 20px);
-        max-height: calc(100vh - 20px);
+        width: calc(100dvw - 20px);
+        max-width: calc(100dvw - 20px);
+        max-height: calc(100dvh - 20px);
         border-radius: var(--radius-md);
       }
 
@@ -672,6 +690,15 @@
       .stat-strip {
         grid-template-columns: 1fr;
       }
+
+      .key-row {
+        gap: 3px;
+      }
+
+      .key {
+        min-height: 46px;
+        height: 46px;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -713,6 +740,9 @@
     .demo-shell {
       min-height: 100vh;
       padding: 0;
+      align-items: stretch;
+      justify-content: flex-start;
+      overflow-x: hidden;
       background-image:
         linear-gradient(#f3f4f6 1px, transparent 1px),
         linear-gradient(90deg, #f3f4f6 1px, transparent 1px);
@@ -722,7 +752,7 @@
     .demo-panel {
       width: 100%;
       min-height: 100vh;
-      padding: clamp(24px, 6vw, 72px) max(24px, calc((100vw - 1120px) / 2));
+      padding: clamp(24px, 6vw, 72px) clamp(24px, 7vw, 96px);
       border: 0;
       border-radius: 0;
       background: rgba(255, 255, 255, 0.92);
@@ -785,7 +815,7 @@
     }
 
     .widget-backdrop {
-      background: rgba(15, 23, 42, 0.42);
+      background: rgba(255, 255, 255, 0.96);
       backdrop-filter: blur(4px);
     }
 
@@ -1050,6 +1080,7 @@
     const shareButton = document.getElementById("shareButton");
     const sharePreview = document.getElementById("sharePreview");
     const keyboard = document.getElementById("keyboard");
+    widgetRoot.inert = true;
 
     document.getElementById("dailyDate").textContent = new Intl.DateTimeFormat(undefined, {
       weekday: "short",
@@ -1239,6 +1270,7 @@
       restoreFocusTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       widgetRoot.classList.add("is-open");
       widgetRoot.setAttribute("aria-hidden", "false");
+      widgetRoot.inert = false;
       pageContent.inert = true;
       document.body.classList.add("modal-open");
       window.setTimeout(() => guessInput.focus(), 80);
@@ -1247,6 +1279,7 @@
     function closeWidget() {
       widgetRoot.classList.remove("is-open");
       widgetRoot.setAttribute("aria-hidden", "true");
+      widgetRoot.inert = true;
       pageContent.inert = false;
       document.body.classList.remove("modal-open");
       if (restoreFocusTarget && typeof restoreFocusTarget.focus === "function") {
