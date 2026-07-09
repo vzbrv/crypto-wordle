@@ -1,8 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Play IQ.wiki Word Brain, a daily Web3 word challenge.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="IQ.wiki Word Brain">
+  <meta property="og:description" content="Test your Web3 knowledge with a new word challenge every day.">
+  <meta property="og:url" content="https://vzbrv.github.io/crypto-wordle/">
+  <meta property="og:image" content="https://vzbrv.github.io/crypto-wordle/assets/iq-logo-pink.svg">
+  <link rel="canonical" href="https://vzbrv.github.io/crypto-wordle/">
   <link rel="icon" href="./assets/iq-logo-pink.svg" type="image/svg+xml">
   <title>IQ.wiki Web3 Wordle Widget</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -57,6 +64,10 @@
         radial-gradient(circle at 10% 8%, rgba(255, 79, 184, 0.16), transparent 28rem),
         radial-gradient(circle at 86% 0%, rgba(245, 200, 76, 0.16), transparent 24rem),
         var(--color-page);
+    }
+
+    body.modal-open {
+      overflow: hidden;
     }
 
     .demo-shell {
@@ -140,7 +151,7 @@
 
     .button-primary {
       background: linear-gradient(135deg, var(--color-brand), var(--color-brand-strong));
-      color: white;
+      color: var(--color-ink);
       box-shadow: var(--shadow-brand);
     }
 
@@ -181,6 +192,7 @@
 
     .widget-card {
       position: absolute;
+      z-index: 1;
       left: 50%;
       top: 50%;
       width: min(500px, calc(100vw - 28px));
@@ -198,12 +210,10 @@
 
     @keyframes modal-in {
       from {
-        opacity: 0;
         transform: translate(-50%, -48%) scale(0.98);
       }
 
       to {
-        opacity: 1;
         transform: translate(-50%, -50%) scale(1);
       }
     }
@@ -413,8 +423,7 @@
 
     .submit-button,
     .share-button,
-    .read-button,
-    .reset-button {
+    .read-button {
       min-height: 44px;
       border: 0;
       border-radius: var(--radius-sm);
@@ -487,7 +496,6 @@
 
     .stat-strip {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       margin: 14px 0;
     }
@@ -526,11 +534,6 @@
       display: grid;
       place-items: center;
       text-decoration: none;
-    }
-
-    .reset-button {
-      width: 100%;
-      margin-top: 8px;
     }
 
     .share-preview {
@@ -728,7 +731,7 @@
     }
 
     .demo-top {
-      margin-bottom: clamp(72px, 13vh, 140px);
+      margin-bottom: clamp(40px, 8vh, 72px);
       color: var(--color-ink);
       font-size: 1.1rem;
       font-weight: 700;
@@ -742,7 +745,7 @@
 
     .demo-panel h1 {
       max-width: 760px;
-      font-size: clamp(2.5rem, 6vw, 4.75rem);
+      font-size: clamp(2.5rem, 5vw, 4rem);
       line-height: 1.02;
       font-weight: 600;
     }
@@ -755,6 +758,12 @@
     .button {
       border-radius: 8px;
       font-weight: 600;
+    }
+
+    .button-icon {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
     }
 
     .button:hover {
@@ -813,7 +822,7 @@
     }
 
     .pill {
-      color: var(--color-brand-strong);
+      color: #861447;
       border-color: #ffc0df;
       background: var(--color-brand-soft);
     }
@@ -851,7 +860,7 @@
       }
 
       .demo-top {
-        margin-bottom: 72px;
+        margin-bottom: 32px;
       }
 
       .widget-card {
@@ -861,16 +870,16 @@
   </style>
 </head>
 <body>
-  <main class="demo-shell">
+  <main class="demo-shell" id="pageContent">
     <section class="demo-panel" aria-labelledby="demo-title">
       <div class="demo-top">
         <img class="iq-mark" src="./assets/iq-logo-pink.svg" alt="">
         <strong>IQ.wiki</strong>
       </div>
       <h1 id="demo-title">Daily Web3 knowledge, built into IQ.wiki.</h1>
-      <p class="demo-copy">A lightweight daily challenge for project pages, people, tokens, glossary terms, and events. The widget is styled to sit naturally inside IQ.wiki while keeping the game quick and shareable.</p>
+      <p class="demo-copy">Identify a Web3 project, person, token, term, or event in five guesses. A new challenge arrives every day.</p>
       <button class="button button-primary open-widget" type="button" id="openWidget">
-        <span aria-hidden="true">🧠</span>
+        <img class="button-icon" src="./assets/iq-logo-pink.svg" alt="" aria-hidden="true">
         Play today
       </button>
     </section>
@@ -878,7 +887,7 @@
 
   <div class="widget-root" id="widgetRoot" aria-hidden="true">
     <div class="widget-backdrop" data-close></div>
-    <section class="widget-card" role="dialog" aria-modal="true" aria-labelledby="widgetTitle">
+    <section class="widget-card" role="dialog" aria-modal="true" aria-labelledby="widgetTitle" tabindex="-1">
       <header class="widget-header">
         <div class="brand-lockup">
           <img class="iq-mark" src="./assets/iq-logo-pink.svg" alt="">
@@ -900,7 +909,8 @@
           <span class="pill" id="categoryLabel"></span>
         </div>
 
-        <div class="board" id="board" aria-label="Guess board"></div>
+        <div class="board" id="board" role="group" aria-label="Guess board"></div>
+        <p class="sr-only" id="boardAnnouncement" aria-live="polite" aria-atomic="true"></p>
 
         <form class="guess-form" id="guessForm">
           <label class="sr-only" for="guessInput">Your guess</label>
@@ -909,7 +919,7 @@
         </form>
         <p class="message" id="message" role="status" aria-live="polite"></p>
 
-        <div class="keyboard" id="keyboard" aria-label="On-screen keyboard"></div>
+        <div class="keyboard" id="keyboard" role="group" aria-label="On-screen keyboard"></div>
 
         <section class="result-panel" id="resultPanel" aria-live="polite">
           <p id="resultCopy"></p>
@@ -918,16 +928,11 @@
               <strong id="attemptStat">-</strong>
               <span>Attempts used</span>
             </div>
-            <div class="stat">
-              <strong id="percentStat">-</strong>
-              <span>Matched your score</span>
-            </div>
           </div>
           <div class="actions">
             <button class="button button-primary share-button" type="button" id="shareButton">Share result</button>
-            <a class="button button-dark read-button" id="readButton" target="_blank" rel="noopener noreferrer">Read more</a>
+            <a class="button button-dark read-button" id="readButton" href="https://iq.wiki/" target="_blank" rel="noopener noreferrer">Read more</a>
           </div>
-          <button class="button button-ghost reset-button" type="button" id="resetButton">Replay demo state</button>
           <pre class="share-preview" id="sharePreview"></pre>
         </section>
       </div>
@@ -938,7 +943,14 @@
     <img class="brain-image" src="./assets/iq-logo-pink.svg" alt="" aria-hidden="true">
   </template>
 
+  <script src="./game-logic.js"></script>
   <script>
+    const {
+      cleanInput,
+      compact,
+      getUtcDateKey,
+      pickDailyIndex
+    } = WordBrainLogic;
     const entries = [
       { title: "ANATOLY YAKOVENKO", category: "People in crypto", slug: "anatoly-yakovenko" },
       { title: "OPEN USD", category: "Cryptoassets", slug: "open-usd" },
@@ -959,7 +971,53 @@
       { title: "VITALIK BUTERIN", category: "People in crypto", slug: "vitalik-buterin" },
       { title: "CHAINLINK", category: "Projects & Protocols", slug: "chainlink" },
       { title: "TOKENOMICS", category: "Glossary", slug: "tokenomics" },
-      { title: "CONSENSUS", category: "Events", slug: "consensus" }
+      { title: "CONSENSUS", category: "Events", slug: "consensus" },
+      { title: "SATOSHI NAKAMOTO", category: "People in crypto", slug: "satoshi-nakamoto" },
+      { title: "GAVIN WOOD", category: "People in crypto", slug: "gavin-wood" },
+      { title: "BRIAN ARMSTRONG", category: "People in crypto", slug: "brian-armstrong" },
+      { title: "CARDANO", category: "Projects & Protocols", slug: "cardano" },
+      { title: "POLKADOT", category: "Projects & Protocols", slug: "polkadot" },
+      { title: "AVALANCHE", category: "Projects & Protocols", slug: "avalanche" },
+      { title: "UNISWAP", category: "Projects & Protocols", slug: "uniswap" },
+      { title: "AAVE", category: "Projects & Protocols", slug: "aave" },
+      { title: "COMPOUND", category: "Projects & Protocols", slug: "compound" },
+      { title: "MAKERDAO", category: "Projects & Protocols", slug: "makerdao" },
+      { title: "ARBITRUM", category: "Projects & Protocols", slug: "arbitrum" },
+      { title: "OPTIMISM", category: "Projects & Protocols", slug: "optimism" },
+      { title: "POLYGON", category: "Projects & Protocols", slug: "polygon" },
+      { title: "COSMOS", category: "Projects & Protocols", slug: "cosmos" },
+      { title: "CELESTIA", category: "Projects & Protocols", slug: "celestia" },
+      { title: "DOGECOIN", category: "Cryptoassets", slug: "dogecoin" },
+      { title: "LITECOIN", category: "Cryptoassets", slug: "litecoin" },
+      { title: "MONERO", category: "Cryptoassets", slug: "monero" },
+      { title: "TETHER", category: "Cryptoassets", slug: "tether" },
+      { title: "USD COIN", category: "Cryptoassets", slug: "usd-coin" },
+      { title: "LIDO", category: "Projects & Protocols", slug: "lido" },
+      { title: "CURVE FINANCE", category: "Projects & Protocols", slug: "curve-finance" },
+      { title: "SUSHISWAP", category: "Projects & Protocols", slug: "sushiswap" },
+      { title: "PANCAKESWAP", category: "Projects & Protocols", slug: "pancakeswap" },
+      { title: "METAMASK", category: "Products", slug: "metamask" },
+      { title: "OPENSEA", category: "Projects & Protocols", slug: "opensea" },
+      { title: "THE GRAPH", category: "Projects & Protocols", slug: "the-graph" },
+      { title: "FILECOIN", category: "Projects & Protocols", slug: "filecoin" },
+      { title: "PROOF OF STAKE", category: "Glossary", slug: "proof-of-stake" },
+      { title: "PROOF OF WORK", category: "Glossary", slug: "proof-of-work" },
+      { title: "SMART CONTRACT", category: "Glossary", slug: "smart-contract" },
+      { title: "ZERO KNOWLEDGE", category: "Glossary", slug: "zero-knowledge-proof" },
+      { title: "LIQUID STAKING", category: "Glossary", slug: "liquid-staking" },
+      { title: "YIELD FARMING", category: "Glossary", slug: "yield-farming" },
+      { title: "FLASH LOAN", category: "Glossary", slug: "flash-loan" },
+      { title: "ORACLE", category: "Glossary", slug: "blockchain-oracle" },
+      { title: "ROLLUP", category: "Glossary", slug: "rollup" },
+      { title: "SIDECHAIN", category: "Glossary", slug: "sidechain" }
+    ];
+    const guessTerms = [
+      "ALTCOIN", "BLOCKCHAIN", "BRIDGE", "COLD WALLET", "CRYPTO", "DAO", "DAPP",
+      "DEX", "DIGITAL ASSET", "ENS", "FIAT", "FORK", "GAS FEE", "GENESIS BLOCK",
+      "GOVERNANCE", "HASH RATE", "HOT WALLET", "IPFS", "LAYER ONE", "LAYER TWO",
+      "LEDGER", "LIQUIDITY", "MAINNET", "MINING", "MULTISIG", "NFT", "NODE",
+      "PRIVATE KEY", "PUBLIC KEY", "SEED PHRASE", "SHARDING", "STABLECOIN",
+      "STAKING", "TESTNET", "TOKEN", "VALIDATOR", "WALLET", "WEB3"
     ];
 
     const maxGuesses = 5;
@@ -969,6 +1027,7 @@
     const answerPattern = answer.title.replace(/[^A-Z0-9 ]/g, "");
     const answerComparable = compact(answerPattern);
     const rowLength = answerPattern.length;
+    const acceptedGuesses = new Set([...entries.map((entry) => entry.title), ...guessTerms].map(compact));
     const stateKey = storagePrefix + todayKey;
     const cells = [];
     const keyboardState = {};
@@ -977,18 +1036,19 @@
     let state = loadState();
 
     const widgetRoot = document.getElementById("widgetRoot");
+    const widgetCard = widgetRoot.querySelector(".widget-card");
+    const pageContent = document.getElementById("pageContent");
     const board = document.getElementById("board");
+    const boardAnnouncement = document.getElementById("boardAnnouncement");
     const guessForm = document.getElementById("guessForm");
     const guessInput = document.getElementById("guessInput");
     const message = document.getElementById("message");
     const resultPanel = document.getElementById("resultPanel");
     const resultCopy = document.getElementById("resultCopy");
     const attemptStat = document.getElementById("attemptStat");
-    const percentStat = document.getElementById("percentStat");
     const readButton = document.getElementById("readButton");
     const shareButton = document.getElementById("shareButton");
     const sharePreview = document.getElementById("sharePreview");
-    const resetButton = document.getElementById("resetButton");
     const keyboard = document.getElementById("keyboard");
 
     document.getElementById("dailyDate").textContent = new Intl.DateTimeFormat(undefined, {
@@ -1013,36 +1073,14 @@
     });
 
     shareButton.addEventListener("click", shareResult);
-    resetButton.addEventListener("click", () => {
-      clearSavedState(stateKey);
-      state = loadState();
-      render();
-      guessInput.disabled = false;
-      guessInput.focus();
-    });
 
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && widgetRoot.classList.contains("is-open")) closeWidget();
+      if (!widgetRoot.classList.contains("is-open")) return;
+      if (event.key === "Escape") closeWidget();
+      if (event.key === "Tab") trapDialogFocus(event);
     });
 
     render();
-
-    function getUtcDateKey(date) {
-      const year = date.getUTCFullYear();
-      const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-      const day = String(date.getUTCDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    }
-
-    function pickDailyIndex(dateText, count) {
-      if (!Number.isInteger(count) || count <= 0) return 0;
-      let hash = 2166136261;
-      for (const char of String(dateText)) {
-        hash ^= char.charCodeAt(0);
-        hash = Math.imul(hash, 16777619);
-      }
-      return (hash >>> 0) % count;
-    }
 
     function loadState() {
       const saved = getSavedState(stateKey);
@@ -1055,25 +1093,25 @@
     }
 
     function createEmptyState() {
-      return { answer: answerComparable, guesses: [], done: false, won: false };
+      return { guesses: [], done: false, won: false };
     }
 
     function normalizeSavedState(parsed) {
-      if (!parsed || parsed.answer !== answerComparable || !Array.isArray(parsed.guesses)) {
+      if (!parsed || !Array.isArray(parsed.guesses)) {
         return createEmptyState();
       }
 
       const guesses = parsed.guesses
         .map((guess) => compact(guess))
-        .filter((guess) => guess.length === answerComparable.length)
+        .filter((guess) => guess.length === answerComparable.length && acceptedGuesses.has(guess))
         .slice(0, maxGuesses);
       const won = guesses.includes(answerComparable);
       const done = won || guesses.length >= maxGuesses;
-      return { answer: answerComparable, guesses, done, won };
+      return { guesses, done, won };
     }
 
     function saveState() {
-      setSavedState(stateKey, JSON.stringify(state));
+      setSavedState(stateKey, JSON.stringify({ guesses: state.guesses }));
     }
 
     function getSavedState(key) {
@@ -1090,12 +1128,6 @@
       } catch (error) {}
     }
 
-    function clearSavedState(key) {
-      try {
-        window.localStorage.removeItem(key);
-      } catch (error) {}
-    }
-
     function render() {
       board.innerHTML = "";
       keyboardState.A = keyboardState.A || "";
@@ -1109,6 +1141,10 @@
         const guess = state.guesses[row];
         const statuses = guess ? scoreGuess(guess) : [];
         const displayGuess = guess ? fitGuessToPattern(guess) : "";
+        rowElement.setAttribute("role", "group");
+        rowElement.setAttribute("aria-label", guess
+          ? describeGuess(row, guess, statuses)
+          : `Guess ${row + 1}, empty`);
 
         for (let col = 0; col < rowLength; col += 1) {
           const cell = document.createElement("div");
@@ -1116,6 +1152,7 @@
           const isSpace = answerChar === " ";
           const status = statuses[col] || "";
           cell.className = `brain-cell ${isSpace ? "space" : ""} ${status}`;
+          cell.setAttribute("aria-hidden", "true");
           cell.appendChild(document.getElementById("brainTemplate").content.firstElementChild.cloneNode(true));
           const letter = document.createElement("span");
           letter.className = "brain-letter";
@@ -1136,7 +1173,7 @@
       guessForm.querySelector("button").disabled = state.done;
 
       if (!state.done) {
-        setMessage(`${maxGuesses - state.guesses.length} ${maxGuesses - state.guesses.length === 1 ? "try" : "tries"} left. Guess any word or phrase with the right length.`, "");
+        setMessage(`${maxGuesses - state.guesses.length} ${maxGuesses - state.guesses.length === 1 ? "try" : "tries"} left. Guess a Web3 term with the right length.`, "");
       }
     }
 
@@ -1154,11 +1191,21 @@
         return;
       }
 
+      if (!acceptedGuesses.has(guess)) {
+        setMessage("That isn’t in the Web3 guess list.", "loss");
+        return;
+      }
+
       state.guesses.push(guess);
       state.won = guess === answerComparable;
       state.done = state.won || state.guesses.length === maxGuesses;
       saveState();
       render();
+      boardAnnouncement.textContent = describeGuess(
+        state.guesses.length - 1,
+        guess,
+        scoreGuess(guess)
+      );
 
       if (state.won) {
         setMessage("Correct. The brain is pleased.", "win");
@@ -1168,55 +1215,11 @@
     }
 
     function scoreGuess(guess) {
-      const result = Array(rowLength).fill("absent");
-      const fittedGuess = fitGuessToPattern(guess);
-      const answerChars = answerPattern.split("");
-      const remaining = {};
-
-      answerChars.forEach((char, index) => {
-        if (char === " ") {
-          result[index] = "space";
-          return;
-        }
-        if (fittedGuess[index] === char) {
-          result[index] = "correct";
-        } else {
-          remaining[char] = (remaining[char] || 0) + 1;
-        }
-      });
-
-      fittedGuess.split("").forEach((char, index) => {
-        if (answerChars[index] === " " || result[index] === "correct") return;
-        if (remaining[char] > 0) {
-          result[index] = "present";
-          remaining[char] -= 1;
-        }
-      });
-
-      return result;
+      return WordBrainLogic.scoreGuess(guess, answerPattern);
     }
 
     function fitGuessToPattern(guess) {
-      const chars = guess.split("");
-      let pointer = 0;
-      return answerPattern.split("").map((char) => {
-        if (char === " ") return " ";
-        const next = chars[pointer] || "";
-        pointer += 1;
-        return next;
-      }).join("");
-    }
-
-    function compact(value) {
-      return cleanInput(value).replace(/[^A-Z0-9]/g, "");
-    }
-
-    function cleanInput(value) {
-      return String(value || "")
-        .normalize("NFKD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-zA-Z0-9 ]/g, "")
-        .toUpperCase();
+      return WordBrainLogic.fitGuessToPattern(guess, answerPattern);
     }
 
     function setMessage(text, tone) {
@@ -1224,20 +1227,54 @@
       message.className = `message ${tone || ""}`;
     }
 
+    function describeGuess(index, guess, statuses) {
+      const counts = statuses.reduce((result, status) => {
+        if (status !== "space") result[status] += 1;
+        return result;
+      }, { correct: 0, present: 0, absent: 0 });
+      return `Guess ${index + 1}, ${fitGuessToPattern(guess)}: ${counts.correct} correct, ${counts.present} misplaced, ${counts.absent} absent.`;
+    }
+
     function openWidget() {
       restoreFocusTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       widgetRoot.classList.add("is-open");
       widgetRoot.setAttribute("aria-hidden", "false");
+      pageContent.inert = true;
+      document.body.classList.add("modal-open");
       window.setTimeout(() => guessInput.focus(), 80);
     }
 
     function closeWidget() {
       widgetRoot.classList.remove("is-open");
       widgetRoot.setAttribute("aria-hidden", "true");
+      pageContent.inert = false;
+      document.body.classList.remove("modal-open");
       if (restoreFocusTarget && typeof restoreFocusTarget.focus === "function") {
         restoreFocusTarget.focus();
       }
       restoreFocusTarget = null;
+    }
+
+    function trapDialogFocus(event) {
+      const focusable = [...widgetCard.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )].filter((element) => !element.hidden && element.offsetParent !== null);
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (!first || !last) {
+        event.preventDefault();
+        widgetCard.focus();
+      } else if (!widgetCard.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
 
     function syncResultPanel() {
@@ -1248,7 +1285,6 @@
 
       resultPanel.classList.add("is-visible");
       const attempts = state.won ? state.guesses.length : "X";
-      const percentage = state.won ? getAttemptPercentage(state.guesses.length) : 6;
       const answerAnchor = document.createElement("button");
       answerAnchor.className = "answer-link";
       answerAnchor.type = "button";
@@ -1262,21 +1298,9 @@
       );
 
       attemptStat.textContent = `${attempts}/5`;
-      percentStat.textContent = `${percentage}%`;
       readButton.href = getWikiUrl();
       readButton.textContent = `Read ${answer.title}`;
       sharePreview.textContent = buildShareText();
-    }
-
-    function getAttemptPercentage(attempt) {
-      const distribution = seededDistribution(todayKey);
-      return distribution[attempt - 1];
-    }
-
-    function seededDistribution(seed) {
-      const raw = [11, 18, 26, 22, 13];
-      const offset = pickDailyIndex(seed + answer.title, 9) - 4;
-      return raw.map((value, index) => Math.max(4, Math.min(44, value + offset + index)));
     }
 
     function getWikiUrl() {
@@ -1291,12 +1315,16 @@
     function buildShareText() {
       const title = state.won ? `${state.guesses.length}/5` : "X/5";
       const lines = state.guesses.map((guess) => {
-        const statuses = scoreGuess(guess).filter((status) => status !== "space");
-        const pink = statuses.filter((status) => status === "correct").length;
-        const yellow = statuses.filter((status) => status === "present").length;
-        return `${"🧠".repeat(pink)}${"💛".repeat(yellow)}${"·".repeat(Math.max(0, answerComparable.length - pink - yellow))}`;
+        return scoreGuess(guess)
+          .filter((status) => status !== "space")
+          .map((status) => ({ correct: "🧠", present: "💛", absent: "·" })[status])
+          .join("");
       });
-      return `IQ.wiki Word Brain ${todayKey} ${title}\n${lines.join("\n")}\nhttps://iq.wiki`;
+      return `IQ.wiki Word Brain ${todayKey} ${title}\n${lines.join("\n")}\n${getGameUrl()}`;
+    }
+
+    function getGameUrl() {
+      return new URL("./", window.location.href).href;
     }
 
     async function shareResult() {
@@ -1307,9 +1335,11 @@
       try {
         if (navigator.share) {
           try {
-            await navigator.share({ title: "IQ.wiki Word Brain", text, url: "https://iq.wiki" });
+            await navigator.share({ title: "IQ.wiki Word Brain", text, url: getGameUrl() });
             return;
-          } catch (error) {}
+          } catch (error) {
+            if (error?.name === "AbortError") return;
+          }
         }
         if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
         await navigator.clipboard.writeText(text);
