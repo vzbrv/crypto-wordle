@@ -13,7 +13,14 @@ const types = {
 };
 
 createServer(async (request, response) => {
-  const pathname = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
+  let pathname;
+  try {
+    pathname = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
+  } catch {
+    response.writeHead(400).end("Bad request");
+    return;
+  }
+
   const requested = pathname === "/" ? "index.html" : pathname.slice(1);
   const file = path.resolve(root, requested);
 
