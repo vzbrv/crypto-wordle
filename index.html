@@ -413,8 +413,7 @@
 
     .submit-button,
     .share-button,
-    .read-button,
-    .reset-button {
+    .read-button {
       min-height: 44px;
       border: 0;
       border-radius: var(--radius-sm);
@@ -487,7 +486,6 @@
 
     .stat-strip {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       margin: 14px 0;
     }
@@ -526,11 +524,6 @@
       display: grid;
       place-items: center;
       text-decoration: none;
-    }
-
-    .reset-button {
-      width: 100%;
-      margin-top: 8px;
     }
 
     .share-preview {
@@ -918,16 +911,11 @@
               <strong id="attemptStat">-</strong>
               <span>Attempts used</span>
             </div>
-            <div class="stat">
-              <strong id="percentStat">-</strong>
-              <span>Matched your score</span>
-            </div>
           </div>
           <div class="actions">
             <button class="button button-primary share-button" type="button" id="shareButton">Share result</button>
             <a class="button button-dark read-button" id="readButton" target="_blank" rel="noopener noreferrer">Read more</a>
           </div>
-          <button class="button button-ghost reset-button" type="button" id="resetButton">Replay demo state</button>
           <pre class="share-preview" id="sharePreview"></pre>
         </section>
       </div>
@@ -984,11 +972,9 @@
     const resultPanel = document.getElementById("resultPanel");
     const resultCopy = document.getElementById("resultCopy");
     const attemptStat = document.getElementById("attemptStat");
-    const percentStat = document.getElementById("percentStat");
     const readButton = document.getElementById("readButton");
     const shareButton = document.getElementById("shareButton");
     const sharePreview = document.getElementById("sharePreview");
-    const resetButton = document.getElementById("resetButton");
     const keyboard = document.getElementById("keyboard");
 
     document.getElementById("dailyDate").textContent = new Intl.DateTimeFormat(undefined, {
@@ -1013,13 +999,6 @@
     });
 
     shareButton.addEventListener("click", shareResult);
-    resetButton.addEventListener("click", () => {
-      clearSavedState(stateKey);
-      state = loadState();
-      render();
-      guessInput.disabled = false;
-      guessInput.focus();
-    });
 
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && widgetRoot.classList.contains("is-open")) closeWidget();
@@ -1087,12 +1066,6 @@
     function setSavedState(key, value) {
       try {
         window.localStorage.setItem(key, value);
-      } catch (error) {}
-    }
-
-    function clearSavedState(key) {
-      try {
-        window.localStorage.removeItem(key);
       } catch (error) {}
     }
 
@@ -1248,7 +1221,6 @@
 
       resultPanel.classList.add("is-visible");
       const attempts = state.won ? state.guesses.length : "X";
-      const percentage = state.won ? getAttemptPercentage(state.guesses.length) : 6;
       const answerAnchor = document.createElement("button");
       answerAnchor.className = "answer-link";
       answerAnchor.type = "button";
@@ -1262,21 +1234,9 @@
       );
 
       attemptStat.textContent = `${attempts}/5`;
-      percentStat.textContent = `${percentage}%`;
       readButton.href = getWikiUrl();
       readButton.textContent = `Read ${answer.title}`;
       sharePreview.textContent = buildShareText();
-    }
-
-    function getAttemptPercentage(attempt) {
-      const distribution = seededDistribution(todayKey);
-      return distribution[attempt - 1];
-    }
-
-    function seededDistribution(seed) {
-      const raw = [11, 18, 26, 22, 13];
-      const offset = pickDailyIndex(seed + answer.title, 9) - 4;
-      return raw.map((value, index) => Math.max(4, Math.min(44, value + offset + index)));
     }
 
     function getWikiUrl() {
@@ -1291,12 +1251,16 @@
     function buildShareText() {
       const title = state.won ? `${state.guesses.length}/5` : "X/5";
       const lines = state.guesses.map((guess) => {
-        const statuses = scoreGuess(guess).filter((status) => status !== "space");
-        const pink = statuses.filter((status) => status === "correct").length;
-        const yellow = statuses.filter((status) => status === "present").length;
-        return `${"🧠".repeat(pink)}${"💛".repeat(yellow)}${"·".repeat(Math.max(0, answerComparable.length - pink - yellow))}`;
+        return scoreGuess(guess)
+          .filter((status) => status !== "space")
+          .map((status) => ({ correct: "🧠", present: "💛", absent: "·" })[status])
+          .join("");
       });
-      return `IQ.wiki Word Brain ${todayKey} ${title}\n${lines.join("\n")}\nhttps://iq.wiki`;
+      return `IQ.wiki Word Brain ${todayKey} ${title}\n${lines.join("\n")}\n${getGameUrl()}`;
+    }
+
+    function getGameUrl() {
+      return new URL("./", window.location.href).href;
     }
 
     async function shareResult() {
@@ -1307,7 +1271,7 @@
       try {
         if (navigator.share) {
           try {
-            await navigator.share({ title: "IQ.wiki Word Brain", text, url: "https://iq.wiki" });
+            await navigator.share({ title: "IQ.wiki Word Brain", text, url: getGameUrl() });
             return;
           } catch (error) {}
         }
