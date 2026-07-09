@@ -1055,11 +1055,11 @@
     }
 
     function createEmptyState() {
-      return { answer: answerComparable, guesses: [], done: false, won: false };
+      return { guesses: [], done: false, won: false };
     }
 
     function normalizeSavedState(parsed) {
-      if (!parsed || parsed.answer !== answerComparable || !Array.isArray(parsed.guesses)) {
+      if (!parsed || !Array.isArray(parsed.guesses)) {
         return createEmptyState();
       }
 
@@ -1069,11 +1069,11 @@
         .slice(0, maxGuesses);
       const won = guesses.includes(answerComparable);
       const done = won || guesses.length >= maxGuesses;
-      return { answer: answerComparable, guesses, done, won };
+      return { guesses, done, won };
     }
 
     function saveState() {
-      setSavedState(stateKey, JSON.stringify(state));
+      setSavedState(stateKey, JSON.stringify({ guesses: state.guesses }));
     }
 
     function getSavedState(key) {
