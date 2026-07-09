@@ -59,6 +59,10 @@
         var(--color-page);
     }
 
+    body.modal-open {
+      overflow: hidden;
+    }
+
     .demo-shell {
       min-height: 100vh;
       display: flex;
@@ -854,7 +858,7 @@
   </style>
 </head>
 <body>
-  <main class="demo-shell">
+  <main class="demo-shell" id="pageContent">
     <section class="demo-panel" aria-labelledby="demo-title">
       <div class="demo-top">
         <img class="iq-mark" src="./assets/iq-logo-pink.svg" alt="">
@@ -871,7 +875,7 @@
 
   <div class="widget-root" id="widgetRoot" aria-hidden="true">
     <div class="widget-backdrop" data-close></div>
-    <section class="widget-card" role="dialog" aria-modal="true" aria-labelledby="widgetTitle">
+    <section class="widget-card" role="dialog" aria-modal="true" aria-labelledby="widgetTitle" tabindex="-1">
       <header class="widget-header">
         <div class="brand-lockup">
           <img class="iq-mark" src="./assets/iq-logo-pink.svg" alt="">
@@ -894,6 +898,7 @@
         </div>
 
         <div class="board" id="board" aria-label="Guess board"></div>
+        <p class="sr-only" id="boardAnnouncement" aria-live="polite" aria-atomic="true"></p>
 
         <form class="guess-form" id="guessForm">
           <label class="sr-only" for="guessInput">Your guess</label>
@@ -1012,7 +1017,10 @@
     let state = loadState();
 
     const widgetRoot = document.getElementById("widgetRoot");
+    const widgetCard = widgetRoot.querySelector(".widget-card");
+    const pageContent = document.getElementById("pageContent");
     const board = document.getElementById("board");
+    const boardAnnouncement = document.getElementById("boardAnnouncement");
     const guessForm = document.getElementById("guessForm");
     const guessInput = document.getElementById("guessInput");
     const message = document.getElementById("message");
@@ -1048,7 +1056,9 @@
     shareButton.addEventListener("click", shareResult);
 
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && widgetRoot.classList.contains("is-open")) closeWidget();
+      if (!widgetRoot.classList.contains("is-open")) return;
+      if (event.key === "Escape") closeWidget();
+      if (event.key === "Tab") trapDialogFocus(event);
     });
 
     render();
@@ -1143,6 +1153,10 @@
         const guess = state.guesses[row];
         const statuses = guess ? scoreGuess(guess) : [];
         const displayGuess = guess ? fitGuessToPattern(guess) : "";
+        rowElement.setAttribute("role", "group");
+        rowElement.setAttribute("aria-label", guess
+          ? describeGuess(row, guess, statuses)
+          : `Guess ${row + 1}, empty`);
 
         for (let col = 0; col < rowLength; col += 1) {
           const cell = document.createElement("div");
@@ -1150,6 +1164,7 @@
           const isSpace = answerChar === " ";
           const status = statuses[col] || "";
           cell.className = `brain-cell ${isSpace ? "space" : ""} ${status}`;
+          cell.setAttribute("aria-hidden", "true");
           cell.appendChild(document.getElementById("brainTemplate").content.firstElementChild.cloneNode(true));
           const letter = document.createElement("span");
           letter.className = "brain-letter";
@@ -1198,6 +1213,11 @@
       state.done = state.won || state.guesses.length === maxGuesses;
       saveState();
       render();
+      boardAnnouncement.textContent = describeGuess(
+        state.guesses.length - 1,
+        guess,
+        scoreGuess(guess)
+      );
 
       if (state.won) {
         setMessage("Correct. The brain is pleased.", "win");
@@ -1263,20 +1283,54 @@
       message.className = `message ${tone || ""}`;
     }
 
+    function describeGuess(index, guess, statuses) {
+      const counts = statuses.reduce((result, status) => {
+        if (status !== "space") result[status] += 1;
+        return result;
+      }, { correct: 0, present: 0, absent: 0 });
+      return `Guess ${index + 1}, ${fitGuessToPattern(guess)}: ${counts.correct} correct, ${counts.present} misplaced, ${counts.absent} absent.`;
+    }
+
     function openWidget() {
       restoreFocusTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       widgetRoot.classList.add("is-open");
       widgetRoot.setAttribute("aria-hidden", "false");
+      pageContent.inert = true;
+      document.body.classList.add("modal-open");
       window.setTimeout(() => guessInput.focus(), 80);
     }
 
     function closeWidget() {
       widgetRoot.classList.remove("is-open");
       widgetRoot.setAttribute("aria-hidden", "true");
+      pageContent.inert = false;
+      document.body.classList.remove("modal-open");
       if (restoreFocusTarget && typeof restoreFocusTarget.focus === "function") {
         restoreFocusTarget.focus();
       }
       restoreFocusTarget = null;
+    }
+
+    function trapDialogFocus(event) {
+      const focusable = [...widgetCard.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )].filter((element) => !element.hidden && element.offsetParent !== null);
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (!first || !last) {
+        event.preventDefault();
+        widgetCard.focus();
+      } else if (!widgetCard.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
 
     function syncResultPanel() {
