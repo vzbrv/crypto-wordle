@@ -9,14 +9,27 @@ Static GitHub Pages build of the IQ.wiki Web3 Wordle widget.
 3. Push to the `main` branch.
 4. In GitHub, enable Pages with **GitHub Actions** as the source.
 
-The included workflow publishes the repo root as a static site. No install or build step is required.
+The workflow validates the game, stages an explicit `dist/` artifact, then
+publishes that artifact. Pages never receives tests, workflows, or source
+tooling.
+
+## Local checks
+
+```sh
+npm ci
+npm run check
+npm run build
+```
 
 ## Files
 
-- `index.html` - widget page and game logic.
+- `index.html` - widget page and browser controller.
+- `game-logic.js` - isolated game rules and scoring.
 - `assets/iq-logo-pink.svg` - official IQ.wiki brand mark.
 - `.nojekyll` - disables Jekyll processing.
-- `.github/workflows/pages.yml` - deploys to GitHub Pages.
+- `.github/workflows/checks.yml` - validates HTML, assets, game rules,
+  accessibility, and browser gameplay.
+- `.github/workflows/pages.yml` - validates and deploys the staged Pages build.
 
 Visual styling follows the [IQ.wiki brand kit](https://iq.wiki/branding).
 

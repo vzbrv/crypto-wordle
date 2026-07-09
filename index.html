@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -151,7 +151,7 @@
 
     .button-primary {
       background: linear-gradient(135deg, var(--color-brand), var(--color-brand-strong));
-      color: white;
+      color: var(--color-ink);
       box-shadow: var(--shadow-brand);
     }
 
@@ -192,6 +192,7 @@
 
     .widget-card {
       position: absolute;
+      z-index: 1;
       left: 50%;
       top: 50%;
       width: min(500px, calc(100vw - 28px));
@@ -209,12 +210,10 @@
 
     @keyframes modal-in {
       from {
-        opacity: 0;
         transform: translate(-50%, -48%) scale(0.98);
       }
 
       to {
-        opacity: 1;
         transform: translate(-50%, -50%) scale(1);
       }
     }
@@ -823,7 +822,7 @@
     }
 
     .pill {
-      color: var(--color-brand-strong);
+      color: #861447;
       border-color: #ffc0df;
       background: var(--color-brand-soft);
     }
@@ -910,7 +909,7 @@
           <span class="pill" id="categoryLabel"></span>
         </div>
 
-        <div class="board" id="board" aria-label="Guess board"></div>
+        <div class="board" id="board" role="group" aria-label="Guess board"></div>
         <p class="sr-only" id="boardAnnouncement" aria-live="polite" aria-atomic="true"></p>
 
         <form class="guess-form" id="guessForm">
@@ -920,7 +919,7 @@
         </form>
         <p class="message" id="message" role="status" aria-live="polite"></p>
 
-        <div class="keyboard" id="keyboard" aria-label="On-screen keyboard"></div>
+        <div class="keyboard" id="keyboard" role="group" aria-label="On-screen keyboard"></div>
 
         <section class="result-panel" id="resultPanel" aria-live="polite">
           <p id="resultCopy"></p>
@@ -932,7 +931,7 @@
           </div>
           <div class="actions">
             <button class="button button-primary share-button" type="button" id="shareButton">Share result</button>
-            <a class="button button-dark read-button" id="readButton" target="_blank" rel="noopener noreferrer">Read more</a>
+            <a class="button button-dark read-button" id="readButton" href="https://iq.wiki/" target="_blank" rel="noopener noreferrer">Read more</a>
           </div>
           <pre class="share-preview" id="sharePreview"></pre>
         </section>
@@ -944,7 +943,14 @@
     <img class="brain-image" src="./assets/iq-logo-pink.svg" alt="" aria-hidden="true">
   </template>
 
+  <script src="./game-logic.js"></script>
   <script>
+    const {
+      cleanInput,
+      compact,
+      getUtcDateKey,
+      pickDailyIndex
+    } = WordBrainLogic;
     const entries = [
       { title: "ANATOLY YAKOVENKO", category: "People in crypto", slug: "anatoly-yakovenko" },
       { title: "OPEN USD", category: "Cryptoassets", slug: "open-usd" },
@@ -1075,37 +1081,6 @@
     });
 
     render();
-
-    function getUtcDateKey(date) {
-      const year = date.getUTCFullYear();
-      const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-      const day = String(date.getUTCDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    }
-
-    function pickDailyIndex(dateText, count) {
-      if (!Number.isInteger(count) || count <= 0) return 0;
-      const dayNumber = Math.floor(Date.parse(`${dateText}T00:00:00Z`) / 86400000);
-      const cycle = Math.floor(dayNumber / count);
-      const dayInCycle = ((dayNumber % count) + count) % count;
-      let stride = Math.max(1, count - 1);
-      while (greatestCommonDivisor(stride, count) !== 1) stride -= 1;
-      return (hashText(`cycle:${cycle}`) % count + dayInCycle * stride) % count;
-    }
-
-    function hashText(value) {
-      let hash = 2166136261;
-      for (const char of String(value)) {
-        hash ^= char.charCodeAt(0);
-        hash = Math.imul(hash, 16777619);
-      }
-      return hash >>> 0;
-    }
-
-    function greatestCommonDivisor(a, b) {
-      while (b) [a, b] = [b, a % b];
-      return a;
-    }
 
     function loadState() {
       const saved = getSavedState(stateKey);
@@ -1240,55 +1215,11 @@
     }
 
     function scoreGuess(guess) {
-      const result = Array(rowLength).fill("absent");
-      const fittedGuess = fitGuessToPattern(guess);
-      const answerChars = answerPattern.split("");
-      const remaining = {};
-
-      answerChars.forEach((char, index) => {
-        if (char === " ") {
-          result[index] = "space";
-          return;
-        }
-        if (fittedGuess[index] === char) {
-          result[index] = "correct";
-        } else {
-          remaining[char] = (remaining[char] || 0) + 1;
-        }
-      });
-
-      fittedGuess.split("").forEach((char, index) => {
-        if (answerChars[index] === " " || result[index] === "correct") return;
-        if (remaining[char] > 0) {
-          result[index] = "present";
-          remaining[char] -= 1;
-        }
-      });
-
-      return result;
+      return WordBrainLogic.scoreGuess(guess, answerPattern);
     }
 
     function fitGuessToPattern(guess) {
-      const chars = guess.split("");
-      let pointer = 0;
-      return answerPattern.split("").map((char) => {
-        if (char === " ") return " ";
-        const next = chars[pointer] || "";
-        pointer += 1;
-        return next;
-      }).join("");
-    }
-
-    function compact(value) {
-      return cleanInput(value).replace(/[^A-Z0-9]/g, "");
-    }
-
-    function cleanInput(value) {
-      return String(value || "")
-        .normalize("NFKD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-zA-Z0-9 ]/g, "")
-        .toUpperCase();
+      return WordBrainLogic.fitGuessToPattern(guess, answerPattern);
     }
 
     function setMessage(text, tone) {
