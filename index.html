@@ -324,6 +324,59 @@
       white-space: nowrap;
     }
 
+    .rules-panel {
+      display: grid;
+      gap: 8px;
+      margin: -4px 0 12px;
+      padding: 10px 12px;
+      border: 1px solid rgba(232, 234, 240, 0.88);
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.62);
+      color: var(--color-muted);
+      font-size: 0.78rem;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .rules-panel p {
+      margin: 0;
+    }
+
+    .legend-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .legend-list li {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 4px;
+      box-shadow: inset 0 0 0 1px rgba(16, 21, 34, 0.12);
+    }
+
+    .legend-correct {
+      background: var(--color-brand);
+    }
+
+    .legend-present {
+      background: var(--color-yellow);
+    }
+
+    .legend-absent {
+      background: #cfd3dc;
+    }
+
     .board {
       display: grid;
       gap: 10px;
@@ -939,6 +992,15 @@
           <span class="pill" id="categoryLabel"></span>
         </div>
 
+        <div class="rules-panel">
+          <p>Guess a valid Web3 project, person, token, term, or event. Invalid guesses do not reveal clues.</p>
+          <ul class="legend-list">
+            <li><span class="legend-swatch legend-correct" aria-hidden="true"></span><span>Right spot</span></li>
+            <li><span class="legend-swatch legend-present" aria-hidden="true"></span><span>Wrong spot</span></li>
+            <li><span class="legend-swatch legend-absent" aria-hidden="true"></span><span>Not in answer</span></li>
+          </ul>
+        </div>
+
         <div class="board" id="board" role="group" aria-label="Guess board"></div>
         <p class="sr-only" id="boardAnnouncement" aria-live="polite" aria-atomic="true"></p>
 
@@ -1204,7 +1266,7 @@
       guessForm.querySelector("button").disabled = state.done;
 
       if (!state.done) {
-        setMessage(`${maxGuesses - state.guesses.length} ${maxGuesses - state.guesses.length === 1 ? "try" : "tries"} left. Guess a Web3 term with the right length.`, "");
+        setMessage(`${maxGuesses - state.guesses.length} ${maxGuesses - state.guesses.length === 1 ? "try" : "tries"} left. Guess a valid Web3 term with the right length.`, "");
       }
     }
 
@@ -1223,7 +1285,7 @@
       }
 
       if (!acceptedGuesses.has(guess)) {
-        setMessage("That isn’t in the Web3 guess list.", "loss");
+        setMessage("That isn’t in the Web3 guess list, so it does not reveal clues.", "loss");
         return;
       }
 
